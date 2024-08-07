@@ -2,6 +2,9 @@ import time
 import torch
 import numpy as np
 from torchvision import models
+# 不加下面的语句，编译会报错
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 
 mode_list = "default reduce-overhead max-autotune".split()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

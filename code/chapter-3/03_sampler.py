@@ -13,6 +13,9 @@ from torchvision.transforms import transforms
 
 
 class COVID19Dataset(Dataset):
+    """
+    对应数据集形式-1： 数据的划分及标签在txt中
+    """
     def __init__(self, root_dir, txt_path, transform=None):
         """
         获取数据集的路径、预处理的方法
@@ -54,13 +57,22 @@ class COVID19Dataset(Dataset):
         with open(self.txt_path, "r") as f:
             txt_data = f.read().strip()
             txt_data = txt_data.split("\n")
-
-        self.img_info = [(os.path.join(self.root_dir, i.split()[0]), int(i.split()[2]))
-                         for i in txt_data]
+        """
+        txt_data
+        covid-19/ryct.2020200028.fig1a.jpeg 0 1
+        no-finding/00001215_001.png 1 0 
+        
+        img_info
+        [
+            ("./data/datasets/covid-19/ryct.2020200028.fig1a.jpeg", 1),
+            ("./data/datasets/no-finding/00001215_001.png", 0),
+        ]
+        """
+        self.img_info = [(os.path.join(self.root_dir, i.split()[0]), int(i.split()[2])) for i in txt_data]
 
 
 if __name__ == "__main__":
-    root_dir = r"E:\pytorch-tutorial-2nd\data\datasets\covid-19-demo"  # path to datasets——covid-19-demo
+    root_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-demo"  # path to datasets——covid-19-demo
     img_dir = os.path.join(root_dir, "imgs")
     path_txt_train = os.path.join(root_dir, "labels", "train.txt")
 

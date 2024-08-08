@@ -21,7 +21,7 @@ def make_fake_data(base_num):
     :return:
     """
     root_dir = r"G:\deep_learning_data\cifar10\cifar10_train"
-    out_dir = r"E:\pytorch-tutorial-2nd\data\datasets\cifar-unbalance"
+    out_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\cifar-unbalance"
 
     import random
     for i in range(10):
@@ -86,9 +86,9 @@ if __name__ == "__main__":
     # make_fake_data()
     # 链接：https://pan.baidu.com/s/1ST85f8qgyKQucvKCBKbzug
     # 提取码：vf4j
-    root_dir = r"E:\pytorch-tutorial-2nd\data\datasets\cifar-unbalance"
+    root_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\cifar-unbalance"
 
-    normalize = transforms.Normalize([0.4914, 0.4822, 0.4465],[0.2023, 0.1994, 0.2010])
+    normalize = transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010])
     transforms_train = transforms.Compose([
         transforms.Resize((32, 32)),
         transforms.ToTensor(),

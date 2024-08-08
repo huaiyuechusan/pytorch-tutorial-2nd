@@ -12,6 +12,56 @@ from PIL import Image
 from torchvision.transforms import transforms
 
 
+class COVID19Dataset_1(Dataset):
+    """
+    对应数据集形式-1： 数据的划分及标签在txt中
+    """
+    def __init__(self, root_dir, txt_path, transform=None):
+        """
+        获取数据集的路径、预处理的方法
+        """
+        self.root_dir = root_dir
+        self.txt_path = txt_path
+        self.transform = transform
+        self.img_info = []  # [(path, label), ... , ]
+        self.label_array = None
+        self._get_img_info()
+
+    def __getitem__(self, index):
+        """
+        输入标量index, 从硬盘中读取数据，并预处理，to Tensor
+        :param index:
+        :return:
+        """
+        path_img, label = self.img_info[index]
+        img = Image.open(path_img).convert('L')
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, label
+
+    def __len__(self):
+        if len(self.img_info) == 0:
+            raise Exception("\ndata_dir:{} is a empty dir! Please checkout your path to images!".format(
+                self.root_dir))  # 代码具有友好的提示功能，便于debug
+        return len(self.img_info)
+
+    def _get_img_info(self):
+        """
+        实现数据集的读取，将硬盘中的数据路径，标签读取进来，存在一个list中
+        path, label
+        :return:
+        """
+        # 读取txt，解析txt
+        with open(self.txt_path, "r") as f:
+            txt_data = f.read().strip()
+            txt_data = txt_data.split("\n")
+
+        self.img_info = [(os.path.join(self.root_dir, i.split()[0]), int(i.split()[2]))
+                         for i in txt_data]
+
+
 class COVID19Dataset_2(Dataset):
     """
     对应数据集形式-2： 数据的划分及标签在文件夹中体现
@@ -60,6 +110,7 @@ class COVID19Dataset_2(Dataset):
             for file in files:
                 if file.endswith("png") or file.endswith("jpeg"):
                     path_img = os.path.join(root, file)
+                    # 返回路径的最后一部分。如果你有一个路径字符串，这个函数会返回路径的最后一部分，通常是文件名或目录名。
                     sub_dir = os.path.basename(root)
                     label_int = self.str_2_int[sub_dir]
                     self.img_info.append((path_img, label_int))
@@ -129,15 +180,17 @@ if __name__ == "__main__":
     # you can download dataset from
     # 链接：https://pan.baidu.com/s/1szfefHgGMeyh6IyfDggLzQ
     # 提取码：ruzz
-    root_dir_train = r"E:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-2\train"  # path to your data
-    root_dir_valid = r"E:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-2\valid"  # path to your data
+    root_dir_train = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-2\train"  # path to your data
+    root_dir_valid = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-2\valid"  # path to your data
     train_set = COVID19Dataset_2(root_dir_train)
     valid_set = COVID19Dataset_2(root_dir_valid)
 
     # =========================== COVID19Dataset_3 ===================================
-    root_dir = r"E:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-3\imgs"  # path to your data
-    path_csv = r"E:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-3\dataset-meta-data.csv"  # path to your data
+    root_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-3\imgs"  # path to your data
+    path_csv = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-3\dataset-meta-data.csv"  # path to your data
     train_set = COVID19Dataset_3(root_dir, path_csv, "train")
+    # iter() 函数用于获取一个可迭代对象的迭代器，而 next() 函数用于从迭代器中获取下一个元素。
+    # 这行代码的作用是从 train_set 数据集中获取第一个元素。
     print(len(train_set), next(iter(train_set)))
     print(len(valid_set), next(iter(valid_set)))  # 思考，为什么返回的是 PIL.Image.Image ？
 

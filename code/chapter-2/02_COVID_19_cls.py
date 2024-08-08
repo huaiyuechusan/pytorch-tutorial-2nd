@@ -92,6 +92,14 @@ def main():
 
         def forward(self, x):
             x = self.convolution_layer(x)
+            """
+            x 是一个Tensor，通常代表了来自模型中某个层的输出。
+            .view() 是一个PyTorch中Tensor的操作，用来改变Tensor的形状而不改变其数据。
+            x.size(0) 获取的是Tensor x 在第一个维度上的大小，通常对应于批量大小（batch size）。
+            -1 是一个在.view()方法中常用的技巧，它告诉PyTorch自动计算该维度的大小，以保持元素的总数不变。
+            """
+            # 将输入Tensor x 从其当前的形状重新整形到一个新的形状，其中第一个维度保持不变（通常是batch size），
+            # 而其他所有维度被压扁（flattened）成一个单一维度。
             x = x.view(x.size(0), -1)
             out = self.fc(x)
             return out

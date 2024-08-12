@@ -135,7 +135,8 @@ def gen_cam(feature_map, grads):
 
 if __name__ == '__main__':
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = r"E:\PyTorch-Tutorial-2nd\data\datasets"
     # you can download the datasets from
     # https://pan.baidu.com/s/1eDwZchwp6P1Ab9d8Qn6rbA   code：l8qe
     path_img = os.path.join(BASE_DIR, "grad_cam_data", "cam_img", "test_img_8.png")

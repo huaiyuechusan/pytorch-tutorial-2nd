@@ -63,7 +63,7 @@ valid_transform = transforms.Compose([
 # 构建MyDataset实例
 # root变量下需要存放cifar-10-python.tar.gz 文件
 # cifar-10-python.tar.gz可从 "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz" 下载
-data_dir = r"F:\pytorch-tutorial-2nd\data\datasets\cifar10-office"
+data_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\cifar10-office"
 train_set = torchvision.datasets.CIFAR10(root=data_dir, train=True, transform=train_transform, download=True)
 test_set = torchvision.datasets.CIFAR10(root=data_dir, train=False, transform=valid_transform, download=True)
 
@@ -84,13 +84,14 @@ for epoch in range(max_epoch):
     # scheduler.step()  # 更新学习率
 
     class_num = len(classes_name)
+    # 第一步：创建混淆矩阵。获取类别数，创建N * N的零矩阵
     conf_mat = np.zeros((class_num, class_num))
     loss_sigma = []
     loss_avg = 0
     acc_avg = 0
     path_error = []
     label_list = []
-    
+
     model.train()
     for i, data in enumerate(train_loader):
         # if i == 30 : break
@@ -109,7 +110,11 @@ for epoch in range(max_epoch):
         loss_sigma.append(loss.item())
         loss_avg = np.mean(loss_sigma)
 
+        # 第二步：获取真实标签和预测标签。
+        # labels为真实标签，通常为一个batch的标签
+        # predicted为预测类别，与labels同长度
         _, predicted = torch.max(outputs.data, 1)
+        # 第三步：依据标签为混淆矩阵计数
         for j in range(len(labels)):
             cate_i = labels[j].cpu().numpy()
             pre_i = predicted[j].cpu().numpy()
@@ -130,9 +135,9 @@ for epoch in range(max_epoch):
     # 记录Accuracy
     writer.add_scalars('Accuracy_group', {'train_acc': acc_avg}, epoch)
 
-    conf_mat_figure = show_conf_mat(conf_mat, classes_name, "train", log_dir, epoch=epoch, verbose=epoch == max_epoch - 1)
+    conf_mat_figure = show_conf_mat(conf_mat, classes_name, "train", log_dir, epoch=epoch,
+                                    verbose=epoch == max_epoch - 1)
     writer.add_figure('confusion_matrix_train', conf_mat_figure, global_step=epoch)
-
 
     # ------------------------------------ 观察模型在验证集上的表现 ------------------------------------
     class_num = len(classes_name)
@@ -170,8 +175,7 @@ for epoch in range(max_epoch):
     writer.add_scalars('Loss_group', {'valid_loss': loss_avg}, epoch)
     writer.add_scalars('Accuracy_group', {'valid_acc': acc_avg}, epoch)
     # 保存混淆矩阵图
-    conf_mat_figure = show_conf_mat(conf_mat, classes_name, "valid", log_dir, epoch=epoch, verbose=epoch == max_epoch - 1)
+    conf_mat_figure = show_conf_mat(conf_mat, classes_name, "valid", log_dir, epoch=epoch,
+                                    verbose=epoch == max_epoch - 1)
     writer.add_figure('confusion_matrix_valid', conf_mat_figure, global_step=epoch)
 print('Finished Training')
-
-

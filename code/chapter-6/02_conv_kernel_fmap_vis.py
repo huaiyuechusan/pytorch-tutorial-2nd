@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # 数据
     # you can download lena from anywhere. tip: lena(Lena Soderberg, 莱娜·瑟德贝里)
-    path_img = r"F:\pytorch-tutorial-2nd\data\imgs\lena.png"  # your path to image
+    path_img = r"E:\PyTorch-Tutorial-2nd\data\imgs\lena.png"  # your path to image
     normMean = [0.49139968, 0.48215827, 0.44653124]
     normStd = [0.24703233, 0.24348505, 0.26158768]
     norm_transform = transforms.Normalize(normMean, normStd)
@@ -77,6 +77,15 @@ if __name__ == "__main__":
 
     # 预处理
     fmap_1.transpose_(0, 1)  # bchw=(1, 64, 55, 55) --> (64, 1, 55, 55)
+    """
+    为什么要将批次数和通道数调换位置？
+    使用 make_grid 函数将特征图可视化时，通常您想要展示的是每个通道的内容，而不是每个批次的内容。
+    1. 单个批次：原始形状 (1, 64, 55, 55) 表示只有单个批次，
+    这意味着 make_grid 会尝试将64个通道作为同一个图像的通道来处理，而不是将它们视为独立的图像。这不符合我们的可视化需求。
+    2. 通道作为独立的图像：通过转置 fmap_1，将其形状变为 (64, 1, 55, 55)，
+    我们实际上是在告诉 make_grid 函数，现在有64个独立的“图像”，每个“图像”有一个通道。
+    这样，make_grid 就可以将每个通道的内容视为一个独立的图像，并在网格中分别显示它们。
+    """
     fmap_1_grid = vutils.make_grid(fmap_1, normalize=True, scale_each=True, nrow=8)
 
     writer.add_image('feature map in conv1', fmap_1_grid, global_step=322)

@@ -23,6 +23,7 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchvision.models import resnet50
 from matplotlib import pyplot as plt
 
+
 def img_transform(img_in, transform):
     """
     将img进行预处理，并转换成模型输入所需的形式—— B*C*H*W
@@ -32,7 +33,7 @@ def img_transform(img_in, transform):
     img = img_in.copy()
     img = Image.fromarray(np.uint8(img))
     img = transform(img)
-    img = img.unsqueeze(0)    # C*H*W --> B*C*H*W
+    img = img.unsqueeze(0)  # C*H*W --> B*C*H*W
     return img
 
 
@@ -44,7 +45,7 @@ def img_preprocess(img_in):
     """
     img = img_in.copy()
     img = cv2.resize(img, (224, 224))
-    img = img[:, :, ::-1]   # BGR --> RGB
+    img = img[:, :, ::-1]  # BGR --> RGB
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize([0.4948052, 0.48568845, 0.44682974], [0.24580306, 0.24236229, 0.2603115])
@@ -72,24 +73,25 @@ if __name__ == '__main__':
 
     cam_alg_list = "GradCAM,ScoreCAM,GradCAMPlusPlus,XGradCAM,EigenCAM,FullGrad".split(",")
 
-
-
-
+    # 自动调整子图参数，使之填充整个图像区域，同时确保子图之间的标题和标签不会重叠。
     plt.tight_layout()
     # fig, axs = plt.subplots(2, 3, figsize=(9, 9))
     fig, axs = plt.subplots(2, 3)
     for idx, cam_name in enumerate(cam_alg_list):
         cam = cam_factory(cam_name)(model=model, target_layers=target_layers)
-        # targets = [e.g ClassifierOutputTarget(281)]
+        # targets = [e.g. ClassifierOutputTarget(281)]
         # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
         grayscale_cam = cam(input_tensor=input_tensor, targets=None)  # If targets is None, the highest scoring category
         # In this example grayscale_cam has only one image in the batch:
         grayscale_cam = grayscale_cam[0, :]
         # img_norm = cv2.normalize(img, None, 0, 1, cv2.NORM_MINMAX)
-        img_norm = img/255.
+        img_norm = img / 255.
         visualization = show_cam_on_image(img_norm, grayscale_cam, use_rgb=False)
         vis_rgb = cv2.cvtColor(visualization, cv2.COLOR_BGR2RGB)
 
+        # axs: 这是一个包含多个子图坐标轴（axes）的数组，通常由plt.subplots()函数返回。
+        # ravel(): 这是一个NumPy数组的方法，用于将多维数组降为一维。
+        # 在这里，它将axs数组展平，使其可以像一维数组那样通过索引访问每个子图坐标轴。
         im = axs.ravel()[idx].imshow(vis_rgb)
         axs.ravel()[idx].set_title(cam_name)
     plt.show()

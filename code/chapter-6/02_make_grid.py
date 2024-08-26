@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # download dataset from
     # 链接：https://pan.baidu.com/s/1szfefHgGMeyh6IyfDggLzQ
     # 提取码：ruzz
-    data_dir = r"F:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-3\imgs"  # path to your data
+    data_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-3\imgs"  # path to your data
     name_list = os.listdir(data_dir)
     path_list = [os.path.join(data_dir, name) for name in name_list]
 

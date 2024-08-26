@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # download dataset from
     # 链接：https://pan.baidu.com/s/1szfefHgGMeyh6IyfDggLzQ
     # 提取码：ruzz
-    path_img = r"F:\pytorch-tutorial-2nd\data\datasets\covid-19-dataset-3\imgs\ryct.2020200028.fig1a.jpeg"
+    path_img = r"E:\PyTorch-Tutorial-2nd\data\datasets\covid-19-dataset-3\imgs\ryct.2020200028.fig1a.jpeg"
     img_opencv = cv2.imread(path_img)
     writer.add_image('img_opencv_HWC-shape:{}'.format(img_opencv.shape), img_opencv, 0, dataformats='HWC')
     writer.close()
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     writer.add_images('add_images', img_batch, 0)
     writer.close()
 
-    # ================================ add_mesh ================================
+    # ================================ add_mesh 绘制网格、3D点云图================================
     import torch
     vertices_tensor = torch.as_tensor([
         [1, 1, 1],
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     writer.add_mesh('add_mesh', vertices=vertices_tensor, colors=colors_tensor, faces=faces_tensor)
     writer.close()
 
-    # ================================ add_hparams ================================
+    # ================================ add_hparams 记录超参数组，可用于记录本次曲线所对应的超参数================================
     writer = SummaryWriter(comment="add_hparams", filename_suffix="_test_tensorboard")
     for i in range(5):
         writer.add_hparams({'lr': 0.1 * i, 'bsize': i},

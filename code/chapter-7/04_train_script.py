@@ -23,7 +23,8 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--data-path", default=r"F:\pytorch-tutorial-2nd\data\datasets\cifar10-office", type=str, help="dataset path")
+    parser.add_argument("--data-path", default=r"E:\PyTorch-Tutorial-2nd\data\datasets\cifar10-office", type=str,
+                        help="dataset path")
     parser.add_argument("--model", default="resnet8", type=str, help="model name")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
     parser.add_argument(
@@ -56,7 +57,16 @@ def get_args_parser(add_help=True):
     return parser
 
 
-def main(args):
+def main():
+    # 调用 get_args_parser() 函数获取 ArgumentParser 实例
+    # 然后调用 parse_args() 方法解析命令行参数
+    # 解析后的参数将作为命名空间对象返回，并将其存储在变量 args 中
+    # args 现在包含了所有通过命令行传递给程序的参数，可以通过属性访问，例如 args.parameter_name
+    args = get_args_parser().parse_args()
+    # 设置随机种子，确保模型可复现性
+    utils.setup_seed(args.random_seed)
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     device = args.device
     data_dir = args.data_path
     result_dir = args.output_dir
@@ -82,6 +92,7 @@ def main(args):
 
     # root变量下需要存放cifar-10-python.tar.gz 文件
     # cifar-10-python.tar.gz可从 "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz" 下载
+    # 其他数据集可以自定义数据集处理方式
     train_set = torchvision.datasets.CIFAR10(root=data_dir, train=True, transform=train_transform, download=True)
     test_set = torchvision.datasets.CIFAR10(root=data_dir, train=False, transform=valid_transform, download=True)
 
@@ -90,18 +101,21 @@ def main(args):
     valid_loader = DataLoader(dataset=test_set, batch_size=args.batch_size, num_workers=args.workers)
 
     # ------------------------------------ tep2: model ------------------------------------
+    # 此处替换自己模型即可
     model = utils.resnet8()
     model.to(device)
 
     # ------------------------------------ step3: optimizer, lr scheduler ------------------------------------
     criterion = nn.CrossEntropyLoss()  # 选择损失函数
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)  # 选择优化器
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_gamma)  # 设置学习率下降策略
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+                          weight_decay=args.weight_decay)  # 选择优化器
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size,
+                                                gamma=args.lr_gamma)  # 设置学习率下降策略
 
     # ------------------------------------ step4: iteration ------------------------------------
     best_acc, best_epoch = 0, 0
-    logger.info(args)
-    logger.info(train_loader, valid_loader)
+    logger.info(f'args = {args}')
+    logger.info(f'train_loader = {train_loader}, valid_loader =  {valid_loader}')
     logger.info("Start training")
     start_time = time.time()
     epoch_time_m = utils.AverageMeter()
@@ -137,9 +151,9 @@ def main(args):
         writer.add_scalars('Accuracy_group', {'train_acc': acc_m_train.avg,
                                               'valid_acc': acc_m_valid.avg}, epoch)
         conf_mat_figure_train = utils.show_conf_mat(mat_train, classes, "train", log_dir, epoch=epoch,
-                                        verbose=epoch == args.epochs - 1, save=False)
+                                                    verbose=epoch == args.epochs - 1, save=False)
         conf_mat_figure_valid = utils.show_conf_mat(mat_valid, classes, "valid", log_dir, epoch=epoch,
-                                        verbose=epoch == args.epochs - 1, save=False)
+                                                    verbose=epoch == args.epochs - 1, save=False)
         writer.add_figure('confusion_matrix_train', conf_mat_figure_train, global_step=epoch)
         writer.add_figure('confusion_matrix_valid', conf_mat_figure_valid, global_step=epoch)
         writer.add_scalar('learning rate', scheduler.get_last_lr()[0], epoch)
@@ -164,15 +178,8 @@ def main(args):
     logger.info("Training time {}".format(total_time_str))
 
 
+# 切换自己数据集的分类
 classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
 if __name__ == "__main__":
-    args = get_args_parser().parse_args()
-    utils.setup_seed(args.random_seed)
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    main(args)
-
-
-
-
-
+    main()

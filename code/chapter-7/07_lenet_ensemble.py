@@ -17,7 +17,6 @@ from torch.utils.data import DataLoader
 from torchensemble.utils import set_module
 from torchensemble.voting import VotingClassifier
 
-
 classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
 
@@ -26,7 +25,8 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--data-path", default=r"F:\pytorch-tutorial-2nd\data\datasets\cifar10-office", type=str, help="dataset path")
+    parser.add_argument("--data-path", default=r"E:\Pytorch-Tutorial-2nd\data\datasets\cifar10-office", type=str,
+                        help="dataset path")
     parser.add_argument("--model", default="resnet8", type=str, help="model name")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
     parser.add_argument(
@@ -59,7 +59,11 @@ def get_args_parser(add_help=True):
     return parser
 
 
-def main(args):
+def main():
+    args = get_args_parser().parse_args()
+    utils.setup_seed(args.random_seed)
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     device = args.device
     data_dir = args.data_path
     result_dir = args.output_dir
@@ -151,7 +155,7 @@ class MyEnsemble(VotingClassifier):
 
         return
 
-    def fit(self, train_loader, epochs=100, log_interval=100, test_loader=None, save_model=True, save_dir=None,):
+    def fit(self, train_loader, epochs=100, log_interval=100, test_loader=None, save_model=True, save_dir=None, ):
 
         # 模型、优化器、学习率调整器、评估器 列表创建
         estimators = []
@@ -171,7 +175,9 @@ class MyEnsemble(VotingClassifier):
 
         acc_metrics = []
         for i in range(self.n_estimators):
-            acc_metrics.append(torchmetrics.Accuracy())
+            # task类型与任务一致
+            # num_classes与分类任务的类别数一致
+            acc_metrics.append(torchmetrics.Accuracy(task="multiclass", num_classes=len(self.classes)))
 
         self._criterion = nn.CrossEntropyLoss()
 
@@ -194,7 +200,10 @@ class MyEnsemble(VotingClassifier):
                 self.writer.add_scalars('Accuracy_group', {'train_acc_{}'.format(model_idx):
                                                                acc_m_train.avg}, epoch)
                 self.writer.add_scalar('learning rate', scheduler.get_last_lr()[0], epoch)
-
+                # 训练混淆矩阵图
+                conf_mat_figure_train = utils.show_conf_mat(mat_train, classes, "train", save_dir, epoch=epoch,
+                                                            verbose=epoch == epochs - 1, save=False)
+                self.writer.add_figure('confusion_matrix_train', conf_mat_figure_train, global_step=epoch)
 
             # validate
             loss_valid_meter, acc_valid, top1_group, mat_valid = \
@@ -204,7 +213,11 @@ class MyEnsemble(VotingClassifier):
             self.writer.add_scalars('Loss_group', {'valid_loss':
                                                        loss_valid_meter.avg}, epoch)
             self.writer.add_scalars('Accuracy_group', {'valid_acc':
-                                                           acc_valid*100}, epoch)
+                                                           acc_valid * 100}, epoch)
+            # 验证混淆矩阵图
+            conf_mat_figure_valid = utils.show_conf_mat(mat_valid, classes, "valid", save_dir, epoch=epoch,
+                                                        verbose=epoch == epochs - 1, save=False)
+            self.writer.add_figure('confusion_matrix_valid', conf_mat_figure_valid, global_step=epoch)
 
             self.logger.info(
                 'Epoch: [{:0>3}/{:0>3}]  '
@@ -217,7 +230,8 @@ class MyEnsemble(VotingClassifier):
                     top1_train=acc_m_train.avg, top1_valid=acc_valid, lr=schedulers[0].get_last_lr()[0]))
 
             for model_idx, top1_meter in enumerate(top1_group):
-                self.writer.add_scalars('Accuracy_group', {'valid_acc_{}'.format(model_idx): top1_meter.compute()*100}, epoch)
+                self.writer.add_scalars('Accuracy_group',
+                                        {'valid_acc_{}'.format(model_idx): top1_meter.compute() * 100}, epoch)
 
             if acc_valid > best_acc:
                 best_acc = acc_valid
@@ -228,11 +242,4 @@ class MyEnsemble(VotingClassifier):
 
 
 if __name__ == "__main__":
-    args = get_args_parser().parse_args()
-    utils.setup_seed(args.random_seed)
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    main(args)
-
-
-
-
+    main()

@@ -13,13 +13,13 @@ from torchinfo import summary
 if __name__ == "__main__":
 
     # ========================================= torch.save ==============================================
-    path_state_dict = "resnet50_state_dict_2022.pth"
+    path_state_dict = "resnet50_state_dict_2024.pth"
     resnet_50 = models.resnet50(pretrained=False)
 
     # 模拟训练，将模型参数进行修改
     print("训练前: ", resnet_50.conv1.weight[0, ...])
     for p in resnet_50.parameters():
-        p.data.fill_(2022)
+        p.data.fill_(2024)
     print("训练后: ", resnet_50.conv1.weight[0, ...])
 
     # 保存

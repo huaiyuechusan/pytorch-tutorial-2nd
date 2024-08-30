@@ -13,7 +13,7 @@ if __name__ == "__main__":
     import torch
     import torchmetrics
 
-    metric = torchmetrics.Accuracy()
+    metric = torchmetrics.Accuracy(task="multiclass", num_classes=5)
     n_batches = 3
     for i in range(n_batches):
         preds = torch.randn(10, 5).softmax(dim=-1)

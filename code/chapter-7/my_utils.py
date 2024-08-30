@@ -72,11 +72,12 @@ class BasicBlock(nn.Module):
                 For CIFAR10 ResNet paper uses option A.
                 """
                 self.shortcut = LambdaLayer(lambda x:
-                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes//4, planes//4), "constant", 0))
+                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes // 4, planes // 4), "constant",
+                                                  0))
             elif option == 'B':
                 self.shortcut = nn.Sequential(
-                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
-                     nn.BatchNorm2d(self.expansion * planes)
+                    nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                    nn.BatchNorm2d(self.expansion * planes)
                 )
 
     def forward(self, x):
@@ -91,6 +92,7 @@ class ResNet(nn.Module):
     """
     https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     """
+
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 16
@@ -105,7 +107,7 @@ class ResNet(nn.Module):
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
@@ -127,11 +129,13 @@ class ResNet(nn.Module):
 def resnet8(num_classes=10):
     return ResNet(BasicBlock, [1, 1, 1], num_classes)
 
+
 def resnet20():
     """
     https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     """
     return ResNet(BasicBlock, [3, 3, 3])
+
 
 def show_conf_mat(confusion_mat, classes, set_name, out_dir, epoch=999, verbose=False, perc=False, save=True):
     """
@@ -158,9 +162,9 @@ def show_conf_mat(confusion_mat, classes, set_name, out_dir, epoch=999, verbose=
     elif cls_num >= 100:
         figsize = 30
     else:
-        figsize = np.linspace(6, 30, 91)[cls_num-10]
+        figsize = np.linspace(6, 30, 91)[cls_num - 10]
 
-    fig, ax = plt.subplots(figsize=(int(figsize), int(figsize*1.3)))
+    fig, ax = plt.subplots(figsize=(int(figsize), int(figsize * 1.3)))
 
     # 获取颜色
     cmap = plt.cm.get_cmap('Greys')  # 更多颜色: http://matplotlib.org/examples/color/colormaps_reference.html
@@ -185,7 +189,7 @@ def show_conf_mat(confusion_mat, classes, set_name, out_dir, epoch=999, verbose=
         for i in range(confusion_mat_tmp.shape[0]):
             for j in range(confusion_mat_tmp.shape[1]):
                 ax.text(x=j, y=i, s="{:.0%}".format(conf_mat_per[i, j]), va='center', ha='center', color='red',
-                         fontsize=10)
+                        fontsize=10)
     else:
         for i in range(confusion_mat_tmp.shape[0]):
             for j in range(confusion_mat_tmp.shape[1]):
@@ -308,12 +312,16 @@ class ModelTrainerEnsemble(ModelTrainer):
         conf_mat = np.zeros((class_num, class_num))
 
         loss_m = AverageMeter()
-        top1_m = torchmetrics.Accuracy().to(device)
+        # task类型与任务一致
+        # num_classes与分类任务的类别数一致
+        top1_m = torchmetrics.Accuracy(task="multiclass", num_classes=class_num).to(device)
 
         # top1 acc group
         top1_group = []
         for model_idx in range(len(models)):
-            top1_group.append(torchmetrics.Accuracy().to(device))
+            # task类型与任务一致
+            # num_classes与分类任务的类别数一致
+            top1_group.append(torchmetrics.Accuracy(task="multiclass", num_classes=class_num).to(device))
 
         for i, data in enumerate(data_loader):
             inputs, labels = data
@@ -334,6 +342,13 @@ class ModelTrainerEnsemble(ModelTrainer):
             # loss 组
             loss = loss_f(output_avg.cpu(), labels.cpu())
             loss_m.update(loss.item(), inputs.size(0))
+
+            # 计算混淆矩阵
+            _, predicted = torch.max(output_avg.data, 1)
+            for j in range(len(labels)):
+                cate_i = labels[j].cpu().numpy()
+                pre_i = predicted[j].cpu().numpy()
+                conf_mat[cate_i, pre_i] += 1.
 
         return loss_m, top1_m.compute(), top1_group, conf_mat
 
@@ -391,17 +406,19 @@ def make_logger(out_dir):
 def setup_seed(seed=42):
     np.random.seed(seed)
     random.seed(seed)
-    torch.manual_seed(seed)     # cpu
+    torch.manual_seed(seed)  # cpu
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = True       # 训练集变化不大时使训练加速，是固定cudnn最优配置，如卷积算法
+        torch.backends.cudnn.benchmark = True  # 训练集变化不大时使训练加速，是固定cudnn最优配置，如卷积算法
 
 
 class AverageMeter:
-    """Computes and stores the average and current value
+    """
+    Computes and stores the average and current value
     Hacked from https://github.com/rwightman/pytorch-image-models/blob/master/timm/utils/metrics.py
     """
+
     def __init__(self):
         self.reset()
 
@@ -419,8 +436,10 @@ class AverageMeter:
 
 
 def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k
-    Hacked from https://github.com/rwightman/pytorch-image-models/blob/master/timm/utils/metrics.py"""
+    """
+    Computes the accuracy over the k top predictions for the specified values of k
+    Hacked from https://github.com/rwightman/pytorch-image-models/blob/master/timm/utils/metrics.py
+    """
     maxk = min(max(topk), output.size()[1])
     batch_size = target.size(0)
     _, pred = output.topk(maxk, 1, True, True)

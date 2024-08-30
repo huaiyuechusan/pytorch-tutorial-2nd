@@ -65,6 +65,7 @@ class AntsDataset(Dataset):
             raise Exception("\ndata_dir:{} is a empty dir! Please checkout your path to images!".format(data_dir))
         return data_info
 
+
 # 参数设置
 max_epoch = 25
 BATCH_SIZE = 16
@@ -90,7 +91,7 @@ writer = SummaryWriter(log_dir=log_dir)
 
 # ============================ step 1/5 数据 ============================
 # https://download.pytorch.org/tutorial/hymenoptera_data.zip
-data_dir = r"G:\deep_learning_data\hymenoptera_data"
+data_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\hymenoptera_data"
 
 train_dir = os.path.join(data_dir, "train")
 valid_dir = os.path.join(data_dir, "val")
@@ -128,26 +129,29 @@ resnet18_ft = models.resnet18()
 # 2/3 加载参数
 # download resnet18-f37072fd.pth from: 
 # https://download.pytorch.org/models/resnet18-f37072fd.pth
-path_pretrained_model = r"F:\pytorch-tutorial-2nd\data\model_zoo\resnet18-f37072fd.pth"
+path_pretrained_model = r"E:\PyTorch-Tutorial-2nd\data\model_zoo\resnet18-f37072fd.pth"
 state_dict_load = torch.load(path_pretrained_model)
 resnet18_ft.load_state_dict(state_dict_load)
 
-# 法1: 冻结卷积层
+"""法1: 冻结卷积层"""
 for param in resnet18_ft.parameters():
     param.requires_grad = False
 print("conv1.weights[0, 0, ...]:\n {}".format(resnet18_ft.conv1.weight[0, 0, ...]))
 
 # 替换fc层
-num_ftrs = resnet18_ft.fc.in_features
+# 获取预训练模型ResNet-18的最后一个全连接层的输入特征数量。
+# 创建一个新的全连接层，其输入特征数量与原模型相同，输出特征数量等于新的分类任务的类别数。
+# 将原模型中的最后一个全连接层替换为新的全连接层，以便模型可以适应新的分类任务。
+num_ftrs = resnet18_ft.fc.in_features   # in_features:全连接层输入特征的数量
 resnet18_ft.fc = nn.Linear(num_ftrs, classes)
 
 resnet18_ft.to(device)
 # ============================ step 3/5 损失函数 ============================
-criterion = nn.CrossEntropyLoss()                                                   # 选择损失函数
+criterion = nn.CrossEntropyLoss()  # 选择损失函数
 
 # =========================== step 4/5 优化器 ============================
-optimizer = optim.SGD(resnet18_ft.parameters(), lr=LR, momentum=0.9)               # 选择优化器
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_decay_step, gamma=0.1)     # 设置学习率下降策略
+optimizer = optim.SGD(resnet18_ft.parameters(), lr=LR, momentum=0.9)  # 选择优化器
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_decay_step, gamma=0.1)  # 设置学习率下降策略
 
 # ============================ step 5/5 训练 ============================
 train_curve = list()
@@ -156,6 +160,8 @@ valid_curve = list()
 for epoch in range(start_epoch + 1, max_epoch):
 
     class_num = classes
+    # 创建tensorboard可视化图
+    # 第一步：创建混淆矩阵。获取类别数，创建N * N的零矩阵
     conf_mat = np.zeros((class_num, class_num))
     loss_sigma = []
     loss_avg = 0
@@ -182,7 +188,12 @@ for epoch in range(start_epoch + 1, max_epoch):
         loss_sigma.append(loss.item())
         loss_avg = np.mean(loss_sigma)
 
+        # 第二步：获取真实标签和预测标签。
+        # 对outputs张量在维度1上应用torch.max函数
+        # 第一个值(_)是outputs张量在指定维度上的最大值，这里表示每个样本的最高预测概率。
+        # 第二个值(predicted)是这些最大值的索引，这里表示每个样本最可能的类别标签。
         _, predicted = torch.max(outputs.data, 1)
+        # 第三步：依据标签为混淆矩阵计数
         for j in range(len(labels)):
             cate_i = labels[j].cpu().numpy()
             pre_i = predicted[j].cpu().numpy()
@@ -205,7 +216,8 @@ for epoch in range(start_epoch + 1, max_epoch):
     # 记录Accuracy
     writer.add_scalars('Accuracy_group', {'train_acc': acc_avg}, epoch)
 
-    conf_mat_figure = show_conf_mat(conf_mat, list(label_name.keys()), "train", log_dir, epoch=epoch, verbose=epoch == max_epoch - 1)
+    conf_mat_figure = show_conf_mat(conf_mat, list(label_name.keys()), "train", log_dir, epoch=epoch,
+                                    verbose=epoch == max_epoch - 1)
     writer.add_figure('confusion_matrix_train', conf_mat_figure, global_step=epoch)
 
     # validate the model
@@ -236,13 +248,13 @@ for epoch in range(start_epoch + 1, max_epoch):
                 pre_i = predicted[j].cpu().numpy()
                 conf_mat[cate_i, pre_i] += 1.
             acc_avg = conf_mat.trace() / conf_mat.sum()
+
     print('{} set Accuracy:{:.2%}'.format('Valid', conf_mat.trace() / conf_mat.sum()))
     # 记录Loss, accuracy
     writer.add_scalars('Loss_group', {'valid_loss': loss_avg}, epoch)
     writer.add_scalars('Accuracy_group', {'valid_acc': acc_avg}, epoch)
     # 保存混淆矩阵图
-    conf_mat_figure = show_conf_mat(conf_mat, list(label_name.keys()), "valid", log_dir, epoch=epoch, verbose=epoch == max_epoch - 1)
+    conf_mat_figure = show_conf_mat(conf_mat, list(label_name.keys()), "valid", log_dir, epoch=epoch,
+                                    verbose=epoch == max_epoch - 1)
     writer.add_figure('confusion_matrix_valid', conf_mat_figure, global_step=epoch)
 print('Finished Training')
-
-

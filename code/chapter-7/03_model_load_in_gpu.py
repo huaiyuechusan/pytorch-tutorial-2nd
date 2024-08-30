@@ -26,7 +26,7 @@ class FooNet(nn.Module):
         return x
 
 
-# =================================== 加载至cpu
+# =================================== 加载至cpu ===================================
 flag = 0
 # flag = 1
 if flag:
@@ -49,7 +49,7 @@ if flag:
     print("state_dict_load:\n{}".format(state_dict_load))
 
 
-# =================================== 多gpu 保存
+# =================================== 多gpu 保存 ===================================
 flag = 0
 # flag = 1
 if flag:
@@ -73,7 +73,7 @@ if flag:
     path_state_dict = "./model_in_multi_gpu.pkl"
     torch.save(net_state_dict, path_state_dict)
 
-# =================================== 多gpu 加载
+# =================================== 多gpu 加载 ===================================
 # flag = 0
 flag = 1
 if flag:
@@ -88,6 +88,7 @@ if flag:
 
     # remove module.
     from collections import OrderedDict
+    # OrderedDict 是一个字典子类，它记住元素插入的顺序
     new_state_dict = OrderedDict()
     for k, v in state_dict_load.items():
         namekey = k[7:] if k.startswith('module.') else k

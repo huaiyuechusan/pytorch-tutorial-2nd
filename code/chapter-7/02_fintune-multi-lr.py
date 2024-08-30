@@ -90,7 +90,7 @@ writer = SummaryWriter(log_dir=log_dir)
 
 # ============================ step 1/5 数据 ============================
 # https://download.pytorch.org/tutorial/hymenoptera_data.zip
-data_dir = r"G:\deep_learning_data\hymenoptera_data"
+data_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\hymenoptera_data"
 
 train_dir = os.path.join(data_dir, "train")
 valid_dir = os.path.join(data_dir, "val")
@@ -128,7 +128,7 @@ resnet18_ft = models.resnet18()
 # 2/3 加载参数
 # download resnet18-f37072fd.pth from:
 # https://download.pytorch.org/models/resnet18-f37072fd.pth
-path_pretrained_model = r"F:\pytorch-tutorial-2nd\data\model_zoo\resnet18-f37072fd.pth"
+path_pretrained_model = r"E:\PyTorch-Tutorial-2nd\data\model_zoo\resnet18-f37072fd.pth"
 state_dict_load = torch.load(path_pretrained_model)
 resnet18_ft.load_state_dict(state_dict_load)
 
@@ -138,12 +138,16 @@ resnet18_ft.fc = nn.Linear(num_ftrs, classes)
 
 resnet18_ft.to(device)
 # ============================ step 3/5 损失函数 ============================
-criterion = nn.CrossEntropyLoss()                                                   # 选择损失函数
+criterion = nn.CrossEntropyLoss()     # 选择损失函数
 
 # =========================== step 4/5 优化器 ============================
- # 返回的是该层所有参数的内存地址
+"""法2：不同层不同学习率"""
+# 返回的是该层所有参数的内存地址
 fc_params_id = list(map(id, resnet18_ft.fc.parameters()))
-#遍历model的参数，只要不是需要ignore的，就保留，返回filter对象，在optimizer.py中的add_param_group中有
+# 遍历model的参数，只要不是需要ignore的，就保留，返回filter对象，在optimizer.py中的add_param_group中有
+# filter函数用于遍历resnet18_ft的所有参数，并且只保留那些ID不在fc_params_id集合中的参数。
+# 当filter函数调用 lambda p: id(p) not in fc_params_id 时，它会传递模型中的一个参数p给lambda函数。
+# p的值是模型resnet18_ft的参数，它是由resnet18_ft.parameters()迭代器提供的。
 base_params = filter(lambda p: id(p) not in fc_params_id, resnet18_ft.parameters())
 
 optimizer = optim.SGD([

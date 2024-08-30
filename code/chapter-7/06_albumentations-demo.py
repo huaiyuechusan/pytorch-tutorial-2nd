@@ -11,13 +11,12 @@ from matplotlib import pyplot as plt
 
 if __name__ == "__main__":
     from albumentations import (
-        HorizontalFlip, Resize, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
+        HorizontalFlip, Resize, ShiftScaleRotate, CLAHE, RandomRotate90,
         Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
-        IAAAdditiveGaussianNoise, GaussNoise, MotionBlur, MedianBlur, IAAPiecewiseAffine,
-        IAASharpen, IAAEmboss, RandomContrast, RandomBrightness, Flip, OneOf, Compose
+        GaussNoise, MotionBlur, MedianBlur, Flip, OneOf, Compose
     )  # 图像变换函数
 
-    path_img = r"F:\pytorch-tutorial-2nd\data\imgs\lena.png"
+    path_img = r"E:\PyTorch-Tutorial-2nd\data\imgs\lena.png"
     image = cv2.imread(path_img, 1)  # BGR
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 

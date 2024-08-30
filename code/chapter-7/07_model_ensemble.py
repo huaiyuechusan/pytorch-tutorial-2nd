@@ -63,7 +63,7 @@ if __name__ == "__main__":
     epochs = 100
 
     # Utils
-    data_dir = r"F:\pytorch-tutorial-2nd\data\datasets\cifar10-office"
+    data_dir = r"E:\PyTorch-Tutorial-2nd\data\datasets\cifar10-office"
     batch_size = 128
     records = []
     torch.manual_seed(0)
@@ -101,6 +101,8 @@ if __name__ == "__main__":
     logger = set_logger("classification_cifar10_cnn", use_tb_logger=True)
     #
     # ============================= FusionClassifier =============================
+    # 原理：先平均，后概率。
+    # 对基学习器的输出进行逐元素的平均，然后再进行softmax进行输出分类概率向量。
     model = FusionClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )
@@ -125,6 +127,8 @@ if __name__ == "__main__":
     )
 
     # ============================= VotingClassifier =============================
+    # voting：先概率，后平均。
+    # voting先对基学习器进行softmax，然后把多个概率向量进行平均。
     model = VotingClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )
@@ -149,6 +153,9 @@ if __name__ == "__main__":
     )
 
     # ============================= BaggingClassifier =============================
+    # 先概率，后平均。这与voting一样。
+    # 主要原理在于基模型的训练数据不一样，因此可得到不同的基模型，
+    # 而torchensemble文档里提到，深度学习中数据越多，模型越好，因此就没有采用K-Flod的方法划分数据了。
     model = BaggingClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )
@@ -173,6 +180,11 @@ if __name__ == "__main__":
     )
 
     # ============================= GradientBoostingClassifier =============================
+    # 先求和，再概率。
+    # 这里先求和是因为Gradient Boosting算法原理就是“加法模型”，最终的结果是利用N个学习器的结果之和得到。
+    # 为什么呢？因为第二个学习器学习的是第一个学习器与目标检测的差距，
+    # 第三个学习器学习的是第一个+第二个学习器结果之和与结果之间的差距，以此类推。
+    # 因此才有了sum_with_multiplicative这个函数中的代码逻辑。
     model = GradientBoostingClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )
@@ -203,6 +215,9 @@ if __name__ == "__main__":
     )
 
     # ============================= SnapshotEnsembleClassifier =============================
+    # 先平均，后概率。
+    # SnapshotEnsembleClassifier是深度学习模型提出后才发明的集成方法，这与深度学习模型训练过程有关。
+    # 其思路是保存多个局部最后的模型，然后将它们的结果进行集成输出。
     model = SnapshotEnsembleClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )
@@ -232,6 +247,7 @@ if __name__ == "__main__":
     )
 
     # ============================= SoftGradientBoostingClassifier =============================
+
     model = SoftGradientBoostingClassifier(
         estimator=LeNet5, n_estimators=n_estimators, cuda=True
     )

@@ -34,6 +34,8 @@ class BrainMRIDataset(Dataset):
     def __getitem__(self, idx):
         image = cv_imread(self.df.iloc[idx, 1])
         mask = cv_imread(self.df.iloc[idx, 2])
+        # 该行代码将变量 mask 中值为 255 的元素设置为 1，
+        # 通常用于将图像中的特定区域标记为 1，以便进行二分类处理（即仅保留两类标签：0 和 1）。
         mask[mask == 255] = 1  # 转换为0, 1 二分类标签
 
         if self.transforms:

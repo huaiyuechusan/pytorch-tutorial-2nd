@@ -4,6 +4,16 @@
 @author     : TingsongYu https://github.com/TingsongYu
 @date       : 2023-02-04
 @brief      : 肺炎Xray图像分类模型，resnet50 QAT 量化
+
+QAT（Quantization-Aware Training）： QAT 是一种在模型训练过程中引入量化的技术。
+在模型训练时，模型参数（如权重和激活值）会模拟低精度格式（如 8 位整数）的运算。
+虽然训练时的计算仍使用高精度浮点数（如 FP32），但通过模拟量化过程，模型能够适应量化引起的精度损失。
+因此，QAT 可以在精度和性能之间取得良好的平衡。
+
+PTQ（Post-Training Quantization）： PTQ 是在模型训练完成后再对其进行量化的技术。
+它不涉及重新训练模型，而是直接将训练好的浮点数模型转换为低精度的整数模型。
+这种方法通常应用在需要快速部署模型的场景中，因为它不需要额外的训练过程。
+然而，PTQ 对于模型的精度要求较高，可能会导致量化后模型性能下降，特别是在更复杂的任务上。
 """
 import os
 import time
@@ -31,8 +41,11 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--data-path", default=r"G:\deep_learning_data\chest_xray", type=str, help="dataset path")
-    parser.add_argument("--ckpt-path", default=r"./Result/2023-09-26_01-47-40/checkpoint_best.pth", type=str, help="ckpt path")
+    parser.add_argument("--data-path", default=r"E:\deeplearning_dataset\chest_xray", type=str, help="dataset path")
+    # 获取当前时间
+    # current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    parser.add_argument("--ckpt-path", default=r"./Result/2024-09-27_12-23-54/checkpoint_best.pth", type=str,
+                        help="ckpt path")
     parser.add_argument("--model", default="resnet50", type=str,
                         help="model name; resnet50/convnext/convnext-tiny")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
@@ -44,7 +57,7 @@ def get_args_parser(add_help=True):
         "-j", "--workers", default=4, type=int, metavar="N", help="number of data loading workers (default: 4)")
     parser.add_argument("--opt", default="sgd", type=str, help="optimizer")
     parser.add_argument("--random-seed", default=42, type=int, help="random seed")
-    parser.add_argument("--lr", default=0.01/100, type=float, help="initial learning rate")
+    parser.add_argument("--lr", default=0.01 / 100, type=float, help="initial learning rate")
     parser.add_argument("--momentum", default=0.9, type=float, metavar="M", help="momentum")
     parser.add_argument(
         "--wd",
@@ -53,7 +66,7 @@ def get_args_parser(add_help=True):
         type=float,
         metavar="W",
         help="weight decay (default: 1e-4)",
-        dest="weight_decay",)
+        dest="weight_decay", )
     parser.add_argument("--print-freq", default=20, type=int, help="print frequency")
     parser.add_argument("--output-dir", default="./Result", type=str, help="path to save outputs")
     parser.add_argument("--start-epoch", default=0, type=int, metavar="N", help="start epoch")
@@ -110,7 +123,6 @@ def main(args):
 
     model_name = model._get_name()
 
-
     if 'ResNet' in model_name:
         # 替换第一层： 因为预训练模型输入是3通道，而本案例是灰度图，输入是1通道
         model.conv1 = nn.Conv2d(1, 64, (7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -135,7 +147,8 @@ def main(args):
     criterion = nn.CrossEntropyLoss()  # 选择损失函数
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
                           weight_decay=args.weight_decay)  # 选择优化器
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=args.lr/100)  # 设置学习率下降策略
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs,
+                                                           eta_min=args.lr / 100)  # 设置学习率下降策略
 
     # ------------------------------------ step4: iteration ------------------------------------
     logger.info(args)
@@ -177,11 +190,12 @@ def main(args):
         model_name = "resnet_50_qat_bs{}_{:.2%}.onnx".format(bs, acc_m_valid.avg / 100)
         onnx_path = os.path.join(log_dir, model_name)
         dummy_input = torch.randn(bs, 1, 224, 224, device='cuda')
+        # 将PyTorch转为ONNX模型
         torch.onnx.export(model, dummy_input, onnx_path, opset_version=13, do_constant_folding=False,
                           input_names=['input'], output_names=['output'])
 
-classes = ["NORMAL", "PNEUMONIA"]
 
+classes = ["NORMAL", "PNEUMONIA"]
 
 if __name__ == "__main__":
     quant_modules.initialize()  # 替换torch.nn的常用层，变为可量化的层

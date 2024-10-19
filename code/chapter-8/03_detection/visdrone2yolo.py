@@ -26,6 +26,7 @@ def visdrone2yolo(dir):
         img_size = Image.open((dir / 'images' / f.name).with_suffix('.jpg')).size
         lines = []
         with open(f, 'r') as file:  # read annotation.txt
+            # 遍历文件中的每一行，分割成列表并去除空白字符
             for row in [x.split(',') for x in file.read().strip().splitlines()]:
                 if row[4] == '0':  # VisDrone 'ignored regions' class 0
                     continue
@@ -39,7 +40,7 @@ def visdrone2yolo(dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument("--data-path", default=r'G:\deep_learning_data\VisDrone',
+    parser.add_argument("--data-path", default=r'E:\deeplearning_dataset\VisDrone',
                         type=str, help="dataset path")
     args = parser.parse_args()
     root_dir = args.data_path  # dataset root dir

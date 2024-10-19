@@ -23,6 +23,7 @@ import utils.utils as utils
 from datasets.brain_mri_dataset import BrainMRIDataset
 
 import platform
+
 if platform.system() == 'Linux':
     matplotlib.use('Agg')
 
@@ -93,9 +94,8 @@ def main(args, model):
     valid_transform = A.Compose([
         A.Resize(width=PATCH_SIZE, height=PATCH_SIZE),
         A.Normalize(norm_mean, norm_std, max_pixel_value=255.),
-        ToTensorV2(),   # 仅数据转换，不会除以255
+        ToTensorV2(),  # 仅数据转换，不会除以255
     ])
-
 
     train_set = BrainMRIDataset(path_train, train_transform)
     valid_set = BrainMRIDataset(path_valid, valid_transform)
@@ -105,7 +105,6 @@ def main(args, model):
     valid_loader = DataLoader(dataset=valid_set, batch_size=args.batch_size, num_workers=args.workers)
 
     # ------------------------------------ tep2: model ------------------------------------
-
 
     # ------------------------------------ step3: optimizer, lr scheduler ------------------------------------
     if args.bce:
@@ -122,14 +121,15 @@ def main(args, model):
             {'params': model.encoder.parameters(), 'lr': args.lr * 0.1}],
             momentum=args.momentum, weight_decay=args.weight_decay)
     else:
-        optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)  # 选择优化器
+        optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+                              weight_decay=args.weight_decay)  # 选择优化器
 
     if args.useplateau:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                factor=0.1, patience=10, cooldown=5, mode='max')
     else:
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size,
-                                            gamma=args.lr_gamma)  # 设置学习率下降策略
+                                                    gamma=args.lr_gamma)  # 设置学习率下降策略
     # ------------------------------------ step4: iteration ------------------------------------
     best_miou, best_epoch = 0, 0
     logger.info(args)
@@ -170,7 +170,7 @@ def main(args, model):
         writer.add_scalars('Loss_group', {'train_loss': loss_m_train.avg,
                                           'valid_loss': loss_m_valid.avg}, epoch)
         writer.add_scalars('miou_group', {'train_miou': miou_m_train.avg,
-                                              'valid_miou': miou_m_valid.avg}, epoch) 
+                                          'valid_miou': miou_m_valid.avg}, epoch)
         writer.add_scalar('learning rate', lr_current, epoch)
 
         # ------------------------------------ 模型保存 ------------------------------------
@@ -208,9 +208,6 @@ if __name__ == "__main__":
     archs = ['Unet', 'UnetPlusPlus', 'MAnet', 'Linknet', 'FPN', 'PSPNet', 'DeepLabV3', 'DeepLabV3Plus', 'PAN']
     for arch_str in archs:
         model_class = getattr(smp, arch_str)
-        model = model_class(encoder_name=args.encoder,  encoder_weights="imagenet",  in_channels=3, classes=1)
+        model = model_class(encoder_name=args.encoder, encoder_weights="imagenet", in_channels=3, classes=1)
         model.to(args.device)
         main(args, model)
-
-
-

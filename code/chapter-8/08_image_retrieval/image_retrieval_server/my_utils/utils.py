@@ -37,6 +37,7 @@ def cv_imread(path_file):
     cv_img = cv2.imdecode(np.fromfile(path_file, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     return cv_img
 
+
 if __name__ == '__main__':
     dir_name = r'G:\deep_learning_data\coco128\images\train2017'
 
@@ -44,18 +45,3 @@ if __name__ == '__main__':
 
     img_path_list = get_file_path(dir_name, img_ext)
     print(img_path_list[0], len(img_path_list))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

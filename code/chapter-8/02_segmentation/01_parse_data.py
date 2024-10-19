@@ -12,7 +12,8 @@ import numpy as np
 import cv2
 import argparse
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid import ImageGrid
+from mpl_toolkits.axes_grid1 import ImageGrid
+# from mpl_toolkits.axes_grid import ImageGrid
 from sklearn.model_selection import train_test_split
 
 
@@ -40,7 +41,11 @@ def data_parse():
 
     # 分别获取图片与标签的路径信息
     df = pd.DataFrame(data, columns=["patient", "image_path"])
+    # 使用~符号来取反 df["image_path"].str.contains("mask")的结果，
+    # 即找出不包含"mask"的图像路径，并将这些路径对应的行保存到新的DataFrame变量df_imgs中。
     df_imgs = df[~df["image_path"].str.contains("mask")]
+    # 为df_imgs DataFrame添加一列"mask_path"，通过在"image_path"列的基础上，
+    # 将每个图像文件名的（最后4个字符）后缀".tif"替换为"_mask.tif"，以此来获取对应的掩膜图像路径
     df_imgs["mask_path"] = df_imgs["image_path"].apply(lambda x: x[:-4] + "_mask.tif")
 
     # 最终df，包含患者id，图片路径，标签路径
@@ -63,8 +68,10 @@ def data_analysis():
 
     dff = pd.read_csv(PATH_SAVE)
 
+    # 在一个10x6英寸的画布上，绘制名为"dff"的数据框中"diagnosis"列的数据统计柱状图
+    # 使用堆积柱状图的形式展示，以便直观地展示不同诊断结果的数量对比
+    # 柱状图颜色分别使用"violet"（紫色）和"orange"（橙色）进行着色，以区分不同的诊断结果
     ax = dff.diagnosis.value_counts().plot(kind="bar", stacked=True, figsize=(10, 6), color=["violet", "orange"])
-
     ax.set_xticklabels(["Positive", "Negative"], rotation=45, fontsize=12)
     ax.set_yticklabels("Total Images", fontsize=12)
     ax.set_title("Distribution of Data Grouped by Diagnosis", fontsize=18, y=1.05)
@@ -151,14 +158,12 @@ def data_split():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument("--data-path", default=r"G:\deep_learning_data\brain-seg\kaggle_3m",
+    parser.add_argument("--data-path", default=r"E:\deeplearning_dataset\kaggle_3m",
                         type=str, help="dataset path")
     args = parser.parse_args()
 
     data_dir = args.data_path  # xxx/kaggle_3m
     PATH_SAVE = 'data_info.csv'
-    # PATH_SAVE_TRAIN = 'data_train_split_by_img.csv'
-    # PATH_SAVE_VAL = 'data_val_split_by_img.csv'
     PATH_SAVE_TRAIN = 'data_train.csv'
     PATH_SAVE_VAL = 'data_val.csv'
     IMG_SHOW_SIZE = 512  # 可视化时，图像大小

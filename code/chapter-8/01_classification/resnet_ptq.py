@@ -20,7 +20,6 @@ from pytorch_quantization import quant_modules
 from pytorch_quantization import calib
 from tqdm import tqdm
 
-
 import os
 import torchvision
 import torchvision.transforms as transforms
@@ -44,12 +43,19 @@ def collect_stats(model, data_loader, num_batches):
     :return:
     """
     # Enable calibrators
+    # 遍历模型的所有模块及其名称
     for name, module in model.named_modules():
+        # 判断模块是否为TensorQuantizer类型
+        # isinstance：Return whether an object is an instance of a class or of a subclass thereof.
         if isinstance(module, quant_nn.TensorQuantizer):
+            # 检查模块是否具有校准器
             if module._calibrator is not None:
+                # 如果有校准器，禁用量化
                 module.disable_quant()
+                # 启用校准
                 module.enable_calib()
             else:
+                # 如果没有校准器，禁用整个模块
                 module.disable()
 
     # Feed data to the network for collecting stats
@@ -89,8 +95,9 @@ def compute_amax(model, **kwargs):
 def get_args_parser(add_help=True):
     import argparse
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
-    parser.add_argument("--data-path", default=r"G:\deep_learning_data\chest_xray", type=str, help="dataset path")
-    parser.add_argument("--ckpt-path", default=r"./Result/2023-09-26_01-47-40/checkpoint_best.pth", type=str, help="ckpt path")
+    parser.add_argument("--data-path", default=r"E:\deeplearning_dataset\chest_xray", type=str, help="dataset path")
+    parser.add_argument("--ckpt-path", default=r"./Result/2024-09-27_12-23-54/checkpoint_best.pth", type=str,
+                        help="ckpt path")
     parser.add_argument("--model", default="resnet50", type=str,
                         help="model name; resnet50/convnext/convnext-tiny")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
@@ -186,7 +193,7 @@ def ptq(args):
         if args.ptq_method == 'percentile':
             compute_amax(model, method='percentile', percentile=99.9)  # 计算上限、下限，并计算scale 、Z值
         else:
-            compute_amax(model, method=args.ptq_method)                     # 计算上限、下限，并计算scale 、Z值
+            compute_amax(model, method=args.ptq_method)  # 计算上限、下限，并计算scale 、Z值
         logger.info('PTQ 量化完成')
     # ------------------------------------ step4: 评估量化后精度  ------------------------------------
     classes = ["NORMAL", "PNEUMONIA"]
@@ -201,11 +208,12 @@ def ptq(args):
     # 导出ONNX
     quant_nn.TensorQuantizer.use_fb_fake_quant = True
     for bs in [1, 32]:
-        model_name = "resnet_50_ptq_bs{}_data-num{}_{}_{:.2%}.onnx".format(bs, args.num_data, args.ptq_method, acc_m_valid.avg / 100)
+        model_name = "resnet_50_ptq_bs{}_data-num{}_{}_{:.2%}.onnx".format(bs, args.num_data, args.ptq_method,
+                                                                           acc_m_valid.avg / 100)
         onnx_path = os.path.join(dir_name, model_name)
         dummy_input = torch.randn(bs, 1, 224, 224, device='cuda')
         torch.onnx.export(model, dummy_input, onnx_path, opset_version=13, do_constant_folding=False,
-                          input_names=['input'],  output_names=['output'])
+                          input_names=['input'], output_names=['output'])
 
 
 def evaluate(args):
@@ -225,7 +233,7 @@ def evaluate(args):
     # ------------------------------------ step3: evaluate ------------------------------------
     classes = ["NORMAL", "PNEUMONIA"]
     criterion = nn.CrossEntropyLoss()  # 选择损失函数
-    loss_m_valid, acc_m_valid, mat_valid =\
+    loss_m_valid, acc_m_valid, mat_valid = \
         utils.ModelTrainer.evaluate(valid_loader, model, criterion, device, classes)
 
     logger.info('PTQ量化前模型ACC :{}'.format(acc_m_valid.avg))
@@ -246,8 +254,9 @@ def pre_t_model_export(args):
         onnx_path = os.path.join(dir_name, model_name)
         dummy_input = torch.randn(bs, 1, 224, 224, device='cuda')
         torch.onnx.export(model, dummy_input, onnx_path, opset_version=13, do_constant_folding=False,
-                          input_names=['input'],  output_names=['output'])
+                          input_names=['input'], output_names=['output'])
         print('模型保存完成: {}'.format(onnx_path))
+
 
 def main(args):
     if args.mode == 'quantize':
@@ -274,5 +283,3 @@ if __name__ == "__main__":
         for ptq_method in ptq_method_list:
             args.ptq_method = ptq_method
             main(args)
-
-

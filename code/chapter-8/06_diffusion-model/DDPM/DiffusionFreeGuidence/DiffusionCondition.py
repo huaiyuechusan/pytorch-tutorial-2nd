@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -38,16 +37,26 @@ class GaussianDiffusionTrainer(nn.Module):
         """
         Algorithm 1.
         """
-        t = torch.randint(self.T, size=(x_0.shape[0], ), device=x_0.device)
+        # 随机选择一个时间步长t
+        t = torch.randint(self.T, size=(x_0.shape[0],), device=x_0.device)
+        # 生成与输入数据x_0相同形状的随机噪声
         noise = torch.randn_like(x_0)
-        x_t =   extract(self.sqrt_alphas_bar, t, x_0.shape) * x_0 + \
-                extract(self.sqrt_one_minus_alphas_bar, t, x_0.shape) * noise
+        # 根据给定的时间步长t，计算并生成噪声后的数据
+        # 此公式基于预定义的alpha序列，将原始数据x_0与噪声结合，以生成在扩散过程中的特定时间点t的数据
+        # 公式包括两个主要部分：
+        # 1. x_0的权重乘以sqrt_alphas_bar的对应值，代表原始数据在当前时间点t的重要性
+        # 2. 噪声的权重乘以sqrt_one_minus_alphas_bar的对应值，代表在当前时间点t引入的随机性
+        # 两部分相加，得到在时间点t上的最终数据x_t，它是在去噪过程中从原始数据x_0到带有噪声的数据的过渡状态
+        x_t = extract(self.sqrt_alphas_bar, t, x_0.shape) * x_0 + \
+              extract(self.sqrt_one_minus_alphas_bar, t, x_0.shape) * noise
+        # 计算模型的预测噪声与实际噪声之间的均方误差损失
+        # 这里的损失是基于模型对噪声部分的预测能力来计算的
         loss = F.mse_loss(self.model(x_t, t, labels), noise, reduction='none')
         return loss
 
 
 class GaussianDiffusionSampler(nn.Module):
-    def __init__(self, model, beta_1, beta_T, T, w = 0.):
+    def __init__(self, model, beta_1, beta_T, T, w=0.):
         super().__init__()
 
         self.model = model
@@ -87,7 +96,7 @@ class GaussianDiffusionSampler(nn.Module):
         for time_step in reversed(range(self.T)):
             print(time_step)
             t = x_t.new_ones([x_T.shape[0], ], dtype=torch.long) * time_step
-            mean, var= self.p_mean_variance(x_t=x_t, t=t, labels=labels)
+            mean, var = self.p_mean_variance(x_t=x_t, t=t, labels=labels)
             if time_step > 0:
                 noise = torch.randn_like(x_t)
             else:
@@ -95,6 +104,4 @@ class GaussianDiffusionSampler(nn.Module):
             x_t = mean + torch.sqrt(var) * noise
             assert torch.isnan(x_t).int().sum() == 0, "nan in tensor."
         x_0 = x_t
-        return torch.clip(x_0, -1, 1)   
-
-
+        return torch.clip(x_0, -1, 1)

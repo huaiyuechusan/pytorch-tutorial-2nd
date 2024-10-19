@@ -29,7 +29,7 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
-    parser.add_argument("--data-path", default=r"G:\deep_learning_data\chest_xray", type=str, help="dataset path")
+    parser.add_argument("--data-path", default=r"E:\deeplearning_dataset\chest_xray", type=str, help="dataset path")
     parser.add_argument("--model", default="resnet50", type=str, help="model name; resnet50 or convnext or convnext-tiny")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
     parser.add_argument(

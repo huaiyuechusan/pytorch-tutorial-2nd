@@ -36,6 +36,7 @@ if __name__ == '__main__':
     # 固定 batch = 1
     out_dir = os.path.dirname(ckpt_path)
     path_out = os.path.join(out_dir, "resnet50_bs_1.onnx")
+    # 将PyTorch模型导出为ONNX格式
     torch.onnx.export(model, (dummy_data), path_out,
                       opset_version=op_set, input_names=['input'],  output_names=['output'])
 

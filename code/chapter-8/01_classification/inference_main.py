@@ -21,10 +21,13 @@ if platform.system() == 'Linux':
 
 def get_args_parser(add_help=True):
     import argparse
-
+    import datetime
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
     parser.add_argument("--img-path", default=r"../../../data/imgs/person15_virus_46.jpeg", type=str, help="dataset path")
-    parser.add_argument("--ckpt-path", default=r"./Result/2023-02-08_16-37-24/checkpoint_best.pth", type=str, help="ckpt path")
+    # 获取当前时间
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    parser.add_argument("--ckpt-path", default=rf"./Result/{current_time}/checkpoint_best.pth", type=str,
+                        help="ckpt path")
     parser.add_argument("--model", default="convnext-tiny", type=str,
                         help="model name; resnet50/convnext/convnext-tiny")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")

@@ -1,5 +1,3 @@
-
-   
 import math
 from telnetlib import PRAGMA_HEARTBEAT
 import torch
@@ -16,8 +14,26 @@ def drop_connect(x, drop_ratio):
     x.mul_(mask)
     return x
 
+
 class Swish(nn.Module):
+    """
+    Swish激活函数类，作为nn.Module的子类进行定义。
+
+    Swish是一种自我门控的激活函数，由Google的研究人员提出。它的形式为f(x) = x * sigmoid(x)，
+    相比于传统的ReLU激活函数，Swish在很多情况下能够带来更好的性能表现。
+    """
+
     def forward(self, x):
+        """
+        定义Swish激活函数的前向传播过程。
+
+        参数:
+        x (Tensor): 输入的张量，可以是一个多维张量。
+
+        返回:
+        Tensor: 经过Swish激活函数计算后的输出张量，与输入张量x维度相同。
+        """
+        # 计算Swish函数的输出，x * sigmoid(x)
         return x * torch.sigmoid(x)
 
 
@@ -117,7 +133,6 @@ class AttnBlock(nn.Module):
         return x + h
 
 
-
 class ResBlock(nn.Module):
     def __init__(self, in_ch, out_ch, tdim, dropout, attn=True):
         super().__init__()
@@ -148,7 +163,6 @@ class ResBlock(nn.Module):
             self.attn = AttnBlock(out_ch)
         else:
             self.attn = nn.Identity()
-
 
     def forward(self, x, temb, labels):
         h = self.block1(x)
@@ -190,7 +204,8 @@ class UNet(nn.Module):
         for i, mult in reversed(list(enumerate(ch_mult))):
             out_ch = ch * mult
             for _ in range(num_res_blocks + 1):
-                self.upblocks.append(ResBlock(in_ch=chs.pop() + now_ch, out_ch=out_ch, tdim=tdim, dropout=dropout, attn=False))
+                self.upblocks.append(
+                    ResBlock(in_ch=chs.pop() + now_ch, out_ch=out_ch, tdim=tdim, dropout=dropout, attn=False))
                 now_ch = out_ch
             if i != 0:
                 self.upblocks.append(UpSample(now_ch))
@@ -201,7 +216,6 @@ class UNet(nn.Module):
             Swish(),
             nn.Conv2d(now_ch, 3, 3, stride=1, padding=1)
         )
- 
 
     def forward(self, x, t, labels):
         # Timestep embedding
@@ -242,4 +256,3 @@ if __name__ == '__main__':
     # y = resB(x, t, labels)
     y = model(x, t, labels)
     print(y.shape)
-

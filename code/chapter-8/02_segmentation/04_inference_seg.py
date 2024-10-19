@@ -87,7 +87,15 @@ def main(args):
             outputs_prob = outputs_prob.squeeze().cpu().numpy().astype('uint8')
 
             # 可视化
+            # 使用OpenCV库中的findContours函数，检测输出图像中的轮廓
+            # 这里的outputs_prob是包含概率值的图像数据，我们用它来找出最大概率对应的区域轮廓
+            # cv2.RETR_TREE参数表示检索所有的轮廓，并将其组织为嵌套树
+            # cv2.CHAIN_APPROX_NONE参数表示不进行任何压缩，保存所有的轮廓点
             output_contours, _ = cv2.findContours(outputs_prob, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+            # 同样的，使用findContours函数检测mask图像中的轮廓
+            # mask是二值图像，通常用于表示一个区域或掩码
+            # 通过检测mask中的轮廓，我们可以得到mask图像中目标区域的边界
             mask_contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             if output_contours:
                 cv2.drawContours(image, output_contours, -1, (0, 255, 0), 1)
